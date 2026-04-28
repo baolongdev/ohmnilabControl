@@ -1,5 +1,5 @@
 #include "motor_control.h"
-#include "config.h"
+#include "../config.h"
 
 // Sensor objects - moi cai dung mot I2C bus rieng
 MagneticSensorI2C sensor  = MagneticSensorI2C(AS5600_I2C);

@@ -1,6 +1,8 @@
 #include "http_server.h"
-#include "motion.h"
-#include "config.h"
+#include "../control/motion.h"
+#include "../config.h"
+#include "../control/robot_actions.h"
+#include "../control/robot_motion_profiles.h"
 
 #include <WebServer.h>
 #include <WiFi.h>
@@ -9,8 +11,27 @@
 static WebServer s_server(HTTP_PORT);
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-static float getSpeed(float defaultSpd = 20.0f) {
-  return s_server.hasArg("speed") ? s_server.arg("speed").toFloat() : defaultSpd;
+// HTTP input is parsed manually because String::toFloat() silently turns many
+// invalid values into 0, which is too ambiguous for a control endpoint.
+static bool getSpeed(float* outSpeed, float defaultSpd = 20.0f) {
+  if (!outSpeed) return false;
+  if (!s_server.hasArg("speed")) {
+    *outSpeed = defaultSpd;
+    return true;
+  }
+
+  String raw = s_server.arg("speed");
+  raw.trim();
+  if (raw.length() == 0) return false;
+
+  char* endPtr = nullptr;
+  float value = strtof(raw.c_str(), &endPtr);
+  if (endPtr == raw.c_str() || (endPtr && *endPtr != '\0') || !isfinite(value)) {
+    return false;
+  }
+
+  *outSpeed = value;
+  return true;
 }
 
 static void addCORSHeaders() {
@@ -22,6 +43,18 @@ static void addCORSHeaders() {
 static void sendJSON(int code, const String& body) {
   addCORSHeaders();
   s_server.send(code, "application/json", body);
+}
+
+static void stopAutomations() {
+  // Manual HTTP control takes precedence over any running scripted behavior.
+  // Stop those engines first so they do not overwrite the new targets on the
+  // next loop tick.
+  actionStop();
+  motionProfileStop();
+}
+
+static void sendInvalidSpeed() {
+  sendJSON(400, "{\"ok\":false,\"error\":\"invalid_speed\"}");
 }
 
 static String okJSON(const char* cmd, float leftTarget, float rightTarget) {
@@ -37,31 +70,39 @@ static String okJSON(const char* cmd, float leftTarget, float rightTarget) {
 
 // ── Route handlers ────────────────────────────────────────────────────────────
 static void handleForward() {
-  float spd = getSpeed();
+  float spd = 20.0f;
+  if (!getSpeed(&spd)) return sendInvalidSpeed();
+  stopAutomations();
   Forward(spd);
   sendJSON(200, okJSON("forward", target_left, target_right));
 }
 
 static void handleBackward() {
-  float spd = getSpeed();
+  float spd = 20.0f;
+  if (!getSpeed(&spd)) return sendInvalidSpeed();
+  stopAutomations();
   Backward(spd);
   sendJSON(200, okJSON("backward", target_left, target_right));
 }
 
 static void handleLeft() {
-  float spd = getSpeed();
+  float spd = 20.0f;
+  if (!getSpeed(&spd)) return sendInvalidSpeed();
+  stopAutomations();
   TurnLeft(spd);
   sendJSON(200, okJSON("left", target_left, target_right));
 }
 
 static void handleRight() {
-  float spd = getSpeed();
+  float spd = 20.0f;
+  if (!getSpeed(&spd)) return sendInvalidSpeed();
+  stopAutomations();
   TurnRight(spd);
   sendJSON(200, okJSON("right", target_left, target_right));
 }
 
 static void handleStop() {
-  Stop();
+  stopAutomations();
   sendJSON(200, okJSON("stop", 0, 0));
 }
 
@@ -88,6 +129,8 @@ static void handleNotFound() {
 
 // ── Public API ────────────────────────────────────────────────────────────────
 void httpServerSetup() {
+  // Keep the runtime HTTP surface intentionally small: direct drive commands
+  // plus a status endpoint for the web control page.
   s_server.on("/forward",  HTTP_GET, handleForward);
   s_server.on("/backward", HTTP_GET, handleBackward);
   s_server.on("/left",     HTTP_GET, handleLeft);

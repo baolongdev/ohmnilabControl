@@ -4,162 +4,272 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OhmniRobot Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg:    #0d0d1a; --card:  #13132b; --inset: #0a0a18;
-  --brd:   #2a2a4a; --cyan:  #00e5ff; --green: #10b981;
-  --amber: #f59e0b; --red:   #ef4444; --txt:   #e2e8f0;
-  --muted: #64748b; --r: 10px;
+  --bg: #ffffff;
+  --panel: #ffffff;
+  --panel-soft: #f3f3f3;
+  --panel-alt: #ebebeb;
+  --text: #000000;
+  --text-soft: #1a1a1a;
+  --muted: #3a3a3a;
+  --line: #000000;
+  --line-soft: #7a7a7a;
+  --focus: #000000;
+  --danger: #000000;
+  --danger-hover: #151515;
+  --ok: #000000;
+  --warn: #000000;
+  --radius: 0;
 }
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--txt);
-  font-family:'Segoe UI',system-ui,sans-serif;
-  display:flex;flex-direction:column;min-height:100vh;font-size:15px}
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0 }
+html, body {
+  background:var(--bg);
+  color:var(--text);
+  font-family:"Helvetica Neue", Arial, sans-serif;
+  font-size:14px;
+  line-height:1.5;
+  min-height:100%;
+  overflow:hidden;
+}
+body{
+  min-height:100%;
+  padding:16px;
+}
+button,input,select,textarea{font-family:inherit}
+
+::-webkit-scrollbar { width:10px; height:10px }
+::-webkit-scrollbar-track { background:transparent }
+::-webkit-scrollbar-thumb { background:var(--line); border:2px solid var(--panel-soft) }
+* { scrollbar-width:thin; scrollbar-color:var(--line) transparent }
+
+#app-shell{
+  width:min(1320px, 100%);
+  height:calc(100vh - 32px);
+  margin:0 auto;
+  background:var(--panel);
+  border:2px solid var(--line);
+  display:grid;
+  grid-template-rows:auto auto 1fr auto;
+  overflow:hidden;
+}
 
 /* Header */
-header{background:var(--card);border-bottom:1px solid var(--brd);
-  padding:13px 18px;display:flex;align-items:center;
-  justify-content:space-between;position:sticky;top:0;z-index:10;gap:10px}
-header h1{font-size:1.05rem;font-weight:700;color:var(--cyan);white-space:nowrap}
+header{
+  background:var(--panel);
+  border-bottom:2px solid var(--line);
+  padding:14px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.hdr-copy{display:flex;flex-direction:column;gap:4px;min-width:0}
+header h1{font-size:1.15rem;font-weight:700;color:var(--text);white-space:nowrap}
+.hdr-sub{font-size:.76rem;color:var(--muted);max-width:560px}
 .badges{display:flex;gap:5px;flex-shrink:0}
-.badge{padding:3px 9px;border-radius:20px;font-size:.7rem;font-weight:700;
-  border:1px solid;transition:all .3s}
-.badge.off {color:var(--muted);border-color:var(--brd)}
-.badge.ok  {color:var(--green);border-color:var(--green);background:rgba(16,185,129,.12)}
-.badge.warn{color:var(--amber);border-color:var(--amber);background:rgba(245,158,11,.12)}
+.badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:3px 8px;
+  font-size:.72rem;
+  font-weight:600;
+  border:2px solid var(--line);
+  background:var(--panel-soft);
+  color:var(--text-soft);
+  transition:all .2s;
+}
+.badge::before{content:">";opacity:.9}
+.badge.off {background:var(--panel);color:var(--text-soft)}
+.badge.ok  {background:#000;color:#fff}
+.badge.warn{background:var(--panel-alt);color:var(--text)}
 
 /* Tabs */
-.tabs{display:flex;background:var(--card);border-bottom:1px solid var(--brd);padding:0 14px}
-.tab{padding:10px 16px;background:none;border:none;color:var(--muted);
-  cursor:pointer;font-size:.85rem;font-weight:600;
-  border-bottom:2px solid transparent;transition:all .2s}
-.tab.active{color:var(--cyan);border-bottom-color:var(--cyan)}
+.tabs{display:flex;background:var(--panel-soft);border-bottom:2px solid var(--line);padding:8px 18px;gap:8px}
+.tab{padding:8px 12px;background:transparent;border:2px solid transparent;color:var(--text-soft);
+  cursor:pointer;font-size:.82rem;font-weight:600;
+  transition:all .2s;letter-spacing:.02em}
+.tab:hover{border-color:var(--line);background:#000;color:#fff}
+.tab.active{border-color:var(--line);background:#000;color:#fff}
 
 /* Content */
-.content{flex:1;padding:14px;max-width:500px;width:100%;margin:0 auto}
-.pane{display:none}.pane.active{display:flex;flex-direction:column;gap:12px}
+.content{min-height:0;overflow:auto;padding:18px;background:var(--panel)}
+.pane{display:none}
+.pane.active{display:grid;grid-template-columns:1fr;gap:12px;align-content:start}
+.pane-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:4px;padding:0 2px}
+.pane-label{color:var(--text);font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.pane-meta{color:var(--muted);font-size:.74rem}
 
 /* Card */
-.card{background:var(--card);border:1px solid var(--brd);
-  border-radius:var(--r);padding:16px}
-.card-title{font-size:.7rem;text-transform:uppercase;letter-spacing:1px;
-  color:var(--muted);margin-bottom:12px}
+.card{
+  background:var(--panel);
+  border:2px solid var(--line);
+  padding:16px;
+  position:relative;
+  min-height:100%;
+}
+.card::before{
+  content:"block";
+  position:absolute;
+  top:-11px;
+  left:10px;
+  padding:0 6px;
+  background:var(--panel);
+  color:var(--muted);
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+.card-title{font-size:.76rem;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--text);margin-bottom:10px;font-weight:700}
+.card-copy{color:var(--muted);font-size:.74rem;margin-bottom:12px;line-height:1.6;max-width:64ch}
 
 /* Field */
 .field{margin-bottom:9px}
-.field label{display:block;font-size:.76rem;color:var(--muted);margin-bottom:3px}
-.field input{width:100%;padding:8px 11px;background:var(--inset);
-  border:1px solid var(--brd);border-radius:8px;color:var(--txt);
+.field label{display:block;font-size:.76rem;color:var(--muted);margin-bottom:4px;font-weight:700}
+.field input{width:100%;padding:10px 12px;background:var(--panel);
+  border:2px solid var(--line);color:var(--text);
   font-size:.86rem;outline:none;transition:border-color .2s}
-.field input:focus{border-color:var(--cyan)}
+.field input:focus{outline:2px solid var(--focus);outline-offset:2px;box-shadow:none}
 
 /* Buttons */
 .btn{display:flex;align-items:center;justify-content:center;gap:5px;
-  padding:9px 14px;border-radius:8px;border:none;font-size:.86rem;
-  font-weight:700;cursor:pointer;transition:all .2s;width:100%;margin-top:5px}
+  padding:9px 12px;border:2px solid var(--line);background:var(--panel);color:var(--text-soft);font-size:.84rem;
+  font-weight:600;cursor:pointer;transition:all .2s;width:100%;margin-top:5px}
 .btn:disabled{opacity:.35;cursor:not-allowed}
-.btn-cyan{background:var(--cyan);color:#000}
-.btn-cyan:hover:not(:disabled){filter:brightness(1.1)}
-.btn-red{background:var(--red);color:#fff}
-.btn-green{background:var(--green);color:#000}
-.btn-outline{background:transparent;border:1px solid var(--brd);
-  color:var(--txt);width:auto;margin-top:0}
-.btn-outline:hover:not(:disabled){border-color:var(--cyan);color:var(--cyan)}
+.btn::before{content:">";opacity:.9}
+.btn:hover:not(:disabled){background:#000;color:#fff}
+.btn-cyan,.btn-red,.btn-green{background:var(--panel);color:var(--text-soft)}
+.btn-outline{width:auto;margin-top:0}
 .btn-sm{padding:7px 12px;font-size:.78rem}
-.row{display:flex;gap:7px;align-items:flex-end}
+.row{display:flex;gap:8px;align-items:flex-end}
 .row .field{flex:1;margin:0}
 
 /* Status box */
-.sbox{margin-top:9px;padding:8px 11px;background:var(--inset);border-radius:8px;
-  border-left:3px solid var(--brd);font-size:.8rem;font-family:monospace;
-  color:var(--muted);transition:all .3s;display:none}
-.sbox.ok  {border-left-color:var(--green);color:var(--green);display:block}
-.sbox.warn{border-left-color:var(--amber);color:var(--amber);display:block}
-.sbox.err {border-left-color:var(--red);color:var(--red);display:block}
+.sbox{margin-top:9px;padding:8px 10px;background:var(--panel-soft);border:2px solid var(--line);
+  font-size:.8rem;color:var(--text-soft);transition:all .3s;display:none}
+.sbox::before{content:"$ ";opacity:.8}
+.sbox.ok  {background:#000;color:#fff;display:block}
+.sbox.warn{background:var(--panel-alt);color:var(--text);display:block}
+.sbox.err {background:#000;color:#fff;display:block}
 .sbox.show{display:block}
 
 /* ── Scan Network List ── */
 #scan-wrap{display:none;margin-top:10px}
-.scan-status{font-size:.76rem;color:var(--muted);margin-bottom:6px;
+.scan-status{font-size:.76rem;color:var(--tm);margin-bottom:6px;
   display:flex;align-items:center;gap:6px}
 .spin{display:inline-block;animation:spin .8s linear infinite;font-size:.9rem}
 @keyframes spin{to{transform:rotate(360deg)}}
 #net-list{display:flex;flex-direction:column;gap:5px;max-height:220px;overflow-y:auto}
 .net-item{display:flex;align-items:center;justify-content:space-between;
-  padding:8px 11px;background:var(--inset);border-radius:8px;
-  border:1px solid var(--brd);cursor:pointer;transition:all .15s;gap:8px}
-.net-item:hover{border-color:var(--cyan);background:#0e0e2a}
-.net-item.selected{border-color:var(--cyan);background:rgba(0,229,255,.06)}
+  padding:8px 11px;background:var(--panel);border:2px solid var(--line);cursor:pointer;transition:all .15s;gap:8px}
+.net-item:hover{background:#000;color:#fff}
+.net-item.selected{background:#000;color:#fff}
 .net-ssid{font-size:.86rem;font-weight:600;flex:1;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap}
 .net-meta{display:flex;align-items:center;gap:6px;flex-shrink:0}
-.net-enc{font-size:.65rem;padding:1px 5px;border-radius:4px;font-weight:700}
-.enc-open{background:rgba(16,185,129,.15);color:var(--green)}
-.enc-wpa {background:rgba(245,158,11,.15);color:var(--amber)}
-.enc-wpa2{background:rgba(0,229,255,.1);color:var(--cyan)}
+.net-enc{font-size:.65rem;padding:1px 5px;font-weight:700;border:2px solid currentColor}
+.enc-open,.enc-wpa,.enc-wpa2{background:var(--panel-soft);color:inherit}
 .net-rssi{font-size:.8rem;font-family:monospace}
-.rssi-strong{color:var(--green)}
-.rssi-ok    {color:var(--amber)}
-.rssi-weak  {color:var(--red)}
+.rssi-strong{color:var(--tg)}
+.rssi-ok    {color:var(--ta)}
+.rssi-weak  {color:var(--tr)}
 
 /* Speed + D-Pad */
 .speed-wrap{margin-bottom:16px}
 .speed-hdr{display:flex;justify-content:space-between;font-size:.78rem;
   color:var(--muted);margin-bottom:5px}
-.speed-hdr em{color:var(--cyan);font-style:normal;font-weight:700}
-input[type=range]{width:100%;accent-color:var(--cyan);cursor:pointer}
+.speed-hdr em{color:var(--text);font-style:normal;font-weight:700}
+input[type=range]{width:100%;accent-color:#000;cursor:pointer}
 #cmd-banner{text-align:center;height:26px;font-size:.78rem;font-weight:700;
-  letter-spacing:1px;color:var(--cyan);opacity:0;transition:opacity .15s;
+  letter-spacing:1px;color:var(--text);opacity:0;transition:opacity .15s;
   margin-bottom:8px}
 #cmd-banner.show{opacity:1}
 .dpad{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;
   max-width:200px;margin:0 auto}
-.dpad-btn{width:100%;aspect-ratio:1/1;background:var(--inset);
-  border:1px solid var(--brd);border-radius:var(--r);color:var(--txt);
+.dpad-btn{width:100%;aspect-ratio:1/1;background:var(--panel);
+  border:2px solid var(--line);color:var(--text);
   font-size:1.45rem;cursor:pointer;transition:all .12s;
   user-select:none;-webkit-user-select:none;
   display:flex;align-items:center;justify-content:center}
-.dpad-btn:active,.dpad-btn.on{background:var(--cyan);color:#000;
-  border-color:var(--cyan);transform:scale(.92)}
-.dpad-btn.stop-btn{background:rgba(239,68,68,.12);border-color:var(--red);
-  color:var(--red);font-size:1.1rem}
-.dpad-btn.stop-btn:active,.dpad-btn.stop-btn.on{background:var(--red);color:#fff}
+.dpad-btn:active,.dpad-btn.on{background:#000;color:#fff;transform:scale(.98)}
+.dpad-btn.stop-btn{background:var(--panel-soft);font-size:1.1rem}
+.dpad-btn.stop-btn:active,.dpad-btn.stop-btn.on{background:#000;color:#fff}
 
 /* Readout */
 .readout{display:flex;gap:7px;margin-top:12px}
-.ro-item{flex:1;background:var(--inset);border-radius:8px;padding:9px;text-align:center}
-.ro-lbl{font-size:.65rem;color:var(--muted);margin-bottom:2px}
-.ro-val{font-size:1.1rem;font-weight:700;font-family:monospace;color:var(--cyan)}
+.ro-item{flex:1;background:var(--panel-soft);border:2px solid var(--line);padding:10px;text-align:center;min-width:0}
+.ro-lbl{font-size:.65rem;color:var(--muted);margin-bottom:2px;font-weight:700}
+.ro-val{font-size:1.1rem;font-weight:700;color:var(--text)}
 
 /* Info grid */
 .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:10px}
-.info-item{background:var(--inset);border-radius:7px;padding:7px 9px}
-.info-lbl{font-size:.65rem;color:var(--muted);margin-bottom:1px}
-.info-val{font-size:.8rem;font-family:monospace;color:var(--txt);
+.info-item{background:var(--panel-soft);border:2px solid var(--line);padding:7px 9px}
+.info-lbl{font-size:.65rem;color:var(--muted);margin-bottom:1px;font-weight:700}
+.info-val{font-size:.8rem;color:var(--text);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* Log */
-.log-panel{background:var(--card);border-top:1px solid var(--brd);
-  display:flex;flex-direction:column;max-height:160px}
+.log-panel{background:var(--panel);border-top:2px solid var(--line);
+  display:flex;flex-direction:column;max-height:180px;max-width:1120px;width:100%;margin:0 auto 0}
 .log-hdr{display:flex;align-items:center;justify-content:space-between;
-  padding:6px 13px;border-bottom:1px solid var(--brd);
-  font-size:.72rem;font-weight:700;color:var(--muted)}
+  padding:8px 13px;border-bottom:2px solid var(--line);
+  font-size:.72rem;font-weight:700;color:var(--text)}
 .log-hdr button{background:none;border:none;color:var(--muted);
   cursor:pointer;font-size:.7rem}
-#log{flex:1;overflow-y:auto;padding:5px 13px;font-family:monospace;font-size:.72rem}
-.le{display:flex;gap:7px;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+#log{flex:1;overflow-y:auto;padding:5px 13px;font-size:.72rem;background:var(--panel-soft)}
+.le{display:flex;gap:7px;padding:4px 0;border-bottom:2px solid var(--panel-alt)}
 .lt{color:var(--muted);flex-shrink:0}
-.lm{color:var(--txt)}.lm.ok{color:var(--green)}.lm.err{color:var(--red)}.lm.info{color:var(--cyan)}
-.note{font-size:.7rem;color:var(--muted);text-align:center;margin-top:5px}
-.kb-hint{text-align:center;font-size:.7rem;color:var(--muted);margin-top:9px}
-kbd{background:var(--inset);border:1px solid var(--brd);border-radius:4px;
+.lm{color:var(--text)}.lm.ok,.lm.err,.lm.info{color:var(--text)}
+.note{font-size:.72rem;color:var(--muted);text-align:center;margin-top:6px}
+.kb-hint{text-align:center;font-size:.72rem;color:var(--muted);margin-top:9px}
+kbd{background:var(--panel);border:2px solid var(--line);
   padding:1px 4px;font-size:.68rem}
+
+@media (min-width: 880px) {
+  #pane-setup.pane.active {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items:start;
+  }
+  #pane-setup .pane-head,
+  #pane-setup .card:last-child {
+    grid-column: 1 / -1;
+  }
+
+  #pane-ctrl.pane.active {
+    grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
+    align-items:start;
+  }
+  #pane-ctrl .pane-head,
+  #pane-ctrl .card:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 680px) {
+  html, body { overflow:auto }
+  .content { padding:12px }
+  header { padding:10px 12px; flex-direction:column; align-items:flex-start }
+  .badges { width:100%; flex-wrap:wrap }
+  .row { flex-direction:column; align-items:stretch }
+  .readout { flex-direction:column }
+  body { padding:8px }
+  #app-shell { height:auto; min-height:calc(100vh - 16px) }
+}
 </style>
 </head>
 <body>
 
+<div id="app-shell">
 <header>
-  <h1>⚙ OhmniRobot</h1>
+  <div class="hdr-copy">
+    <h1>OhmniRobot Control Workspace</h1>
+    <div class="hdr-sub">Provision over BLE, switch to HTTP runtime after WiFi join, keep MCP available in firmware runtime.</div>
+  </div>
   <div class="badges">
     <span class="badge off" id="b-ble">BLE</span>
     <span class="badge off" id="b-wifi">WiFi</span>
@@ -168,26 +278,32 @@ kbd{background:var(--inset);border:1px solid var(--brd);border-radius:4px;
 </header>
 
 <div class="tabs">
-  <button class="tab active" data-tab="setup">Setup</button>
-  <button class="tab"        data-tab="ctrl" >Điều khiển</button>
+  <button class="tab active" data-tab="setup">Provisioning</button>
+  <button class="tab" data-tab="ctrl">Runtime Control</button>
 </div>
 
 <div class="content">
 
   <!-- ══ TAB: SETUP ══════════════════════════════════════════════════════════ -->
   <div id="pane-setup" class="pane active">
+    <div class="pane-head">
+      <div class="pane-label">provision pipeline</div>
+      <div class="pane-meta">ble://onboard -> wifi://join</div>
+    </div>
 
     <!-- Bước 1: Kết nối BLE -->
     <div class="card">
       <div class="card-title">Bước 1 — Kết nối BLE</div>
+      <div class="card-copy">Mở phiên Web Bluetooth với robot để nhận trạng thái provisioning và gửi các lệnh SSID/PASS/SCAN.</div>
       <button class="btn btn-cyan" id="btn-ble" onclick="toggleBLE()">Kết nối BLE</button>
       <div class="sbox" id="ble-box"></div>
-      <p class="note">Yêu cầu Chrome / Edge · HTTPS hoặc localhost</p>
+      <p class="note">chrome|edge required :: origin=https:// or http://localhost</p>
     </div>
 
     <!-- Bước 2: Scan WiFi -->
     <div class="card">
       <div class="card-title">Bước 2 — Quét mạng WiFi</div>
+      <div class="card-copy">Gửi trigger `SCAN` qua BLE. Danh sách mạng sẽ stream ngược lại qua characteristic trạng thái.</div>
       <button class="btn btn-outline" id="btn-scan" onclick="scanWiFi()" disabled>
         Quét mạng WiFi
       </button>
@@ -201,6 +317,7 @@ kbd{background:var(--inset);border:1px solid var(--brd);border-radius:4px;
     <!-- Bước 3: Gửi credentials -->
     <div class="card">
       <div class="card-title">Bước 3 — Kết nối WiFi</div>
+      <div class="card-copy">Gửi SSID và password sang firmware. Khi ESP32 vào mạng thành công, UI sẽ chuyển sang chế độ HTTP runtime.</div>
       <div class="field">
         <label>WiFi SSID</label>
         <input id="ssid" type="text" placeholder="Chọn mạng ở trên hoặc nhập thủ công" autocomplete="off">
@@ -218,6 +335,7 @@ kbd{background:var(--inset);border:1px solid var(--brd);border-radius:4px;
     <!-- Thông tin sau khi kết nối -->
     <div class="card" id="conn-info-card" style="display:none">
       <div class="card-title">Thông tin kết nối</div>
+      <div class="card-copy">Thông tin này được firmware trả về lần cuối qua BLE ngay trước khi chuyển sang HTTP runtime.</div>
       <div class="info-grid" id="conn-info-grid"></div>
     </div>
 
@@ -225,9 +343,14 @@ kbd{background:var(--inset);border:1px solid var(--brd);border-radius:4px;
 
   <!-- ══ TAB: CONTROL ══════════════════════════════════════════════════════════ -->
   <div id="pane-ctrl" class="pane">
+    <div class="pane-head">
+      <div class="pane-label">runtime control</div>
+      <div class="pane-meta">http://&lt;robot-ip&gt;/...</div>
+    </div>
 
     <div class="card">
       <div class="card-title">Robot</div>
+      <div class="card-copy">Nhập IP của robot sau khi join WiFi. `Ping` gọi `/status` để xác thực HTTP runtime đang sẵn sàng.</div>
       <div class="row">
         <div class="field">
           <label>IP Address</label>
@@ -244,6 +367,7 @@ kbd{background:var(--inset);border:1px solid var(--brd);border-radius:4px;
 
     <div class="card">
       <div class="card-title">Điều khiển</div>
+      <div class="card-copy">D-Pad và keyboard gửi lệnh HTTP trực tiếp tới firmware. Nhả phím hoặc nhả nút sẽ gửi `stop` như dead-man switch.</div>
       <div class="speed-wrap">
         <div class="speed-hdr">Tốc độ &nbsp;<em id="spd-val">20</em> rad/s</div>
         <input type="range" id="speed" min="5" max="40" value="20"
@@ -272,10 +396,11 @@ kbd{background:var(--inset);border:1px solid var(--brd);border-radius:4px;
 
 <div class="log-panel">
   <div class="log-hdr">
-    <span>Log</span>
-    <button onclick="document.getElementById('log').innerHTML=''">Xóa</button>
+    <span>runtime.log</span>
+    <button onclick="document.getElementById('log').innerHTML=''">clear</button>
   </div>
   <div id="log"></div>
+</div>
 </div>
 
 <script>
@@ -287,10 +412,17 @@ const STAT_CH  = '12345678-0003-1000-8000-00805f9b34fb';
 const CMD_CH   = '12345678-0004-1000-8000-00805f9b34fb';
 
 // ── State ────────────────────────────────────────────────────────────────────
+// This page has two independent control planes:
+// 1) Web Bluetooth for provisioning WiFi credentials.
+// 2) Plain HTTP for runtime driving once the robot is already on WiFi.
 let bleDevice = null;
 let ssidCh = null, passCh = null, statCh = null, cmdCh = null;
 let pollTimer = null;
 let scannedNets = [];   // [{ssid, rssi, enc}]
+let activeDriveCmd = null;
+let commandInFlight = false;
+let queuedDriveCmd = null;
+let stopTimer = null;
 
 // ── Log ──────────────────────────────────────────────────────────────────────
 function log(msg, type = '') {
@@ -337,6 +469,8 @@ async function toggleBLE() {
     bleDevice.addEventListener('gattserverdisconnected', () => {
       setBLE(false); log('BLE ngắt kết nối.', 'err');
     });
+    // Cache characteristics once so later actions can write SSID/PASS/CMD
+    // without rediscovering the whole GATT tree every time.
     const srv = await bleDevice.gatt.connect();
     const svc = await srv.getPrimaryService(SVC);
     ssidCh = await svc.getCharacteristic(SSID_CH);
@@ -386,6 +520,8 @@ async function scanWiFi() {
     document.getElementById('net-list').innerHTML = '';
     document.getElementById('scan-wrap').style.display = 'block';
     setScanStatus('scanning', 'Đang quét...');
+    // SCAN is just a trigger. Actual scan results come back asynchronously via
+    // the STATUS notify characteristic and are rendered below.
     await cmdCh.writeValue(new TextEncoder().encode('SCAN'));
     log('Đã gửi lệnh SCAN.', 'info');
   } catch(e) {
@@ -397,13 +533,13 @@ function setScanStatus(type, msg) {
   const el = document.getElementById('scan-status');
   if (type === 'scanning') {
     el.innerHTML = `<span class="spin">⟳</span> ${msg}`;
-    el.style.color = 'var(--amber)';
+    el.style.color = 'var(--ta)';
   } else if (type === 'done') {
     el.innerHTML = `✓ ${msg}`;
-    el.style.color = 'var(--green)';
+    el.style.color = 'var(--tg)';
   } else {
     el.innerHTML = msg;
-    el.style.color = 'var(--muted)';
+    el.style.color = 'var(--tm)';
   }
 }
 
@@ -434,6 +570,8 @@ function addNetItem(ssid, rssi, enc) {
       <span class="net-rssi ${rssiClass(rssi)}" title="${rssi} dBm">${rssiBars(rssi)}</span>
     </span>`;
 
+  // Keep the original SSID string separate from rendered HTML so click handling
+  // remains correct even if the visible label was escaped/truncated.
   item.addEventListener('click', () => selectNetwork(ssid, enc, item));
   list.appendChild(item);
 }
@@ -467,6 +605,9 @@ function selectNetwork(ssid, enc, el) {
 function onBLENotify(msg) {
   // Không log SCAN: vào log chính (quá nhiều)
   if (!msg.startsWith('SCAN:')) log('BLE: ' + msg, 'info');
+
+  // BLE status multiplexes both provisioning lifecycle and WiFi scan streaming.
+  // Parse them here and fan out into the corresponding UI regions.
 
   // WiFi Scan messages
   if (msg === 'SCANNING') {
@@ -506,6 +647,8 @@ function onBLENotify(msg) {
     badge('wifi', 'warn', 'WiFi…');
 
   } else if (msg.startsWith('CONNECTED:')) {
+    // Once WiFi comes up the firmware returns connection info through BLE, then
+    // the browser switches over to HTTP polling for normal runtime control.
     // Format: CONNECTED:ip|ssid|rssi|gw
     const parts = msg.slice(10).split('|');
     const ip    = parts[0] || '?';
@@ -555,6 +698,8 @@ function sortNetList() {
   const list  = document.getElementById('net-list');
   const items = [...list.querySelectorAll('.net-item')];
   items.sort((a, b) => {
+    // Sorting is done against the raw scan cache rather than DOM text so the UI
+    // order stays stable even after HTML escaping and badge rendering.
     const ra = scannedNets.find(n => n.ssid === a.dataset.ssid)?.rssi || -100;
     const rb = scannedNets.find(n => n.ssid === b.dataset.ssid)?.rssi || -100;
     return rb - ra;
@@ -587,6 +732,8 @@ function spd() { return document.getElementById('speed').value; }
 async function sendCmd(cmd) {
   const h = ip();
   if (!h) { log('Nhập Robot IP.', 'err'); return; }
+  // Runtime control is intentionally simple: map button/keyboard actions to the
+  // firmware HTTP endpoints that directly drive target wheel velocities.
   const url = cmd === 'stop' ? `http://${h}/stop` : `http://${h}/${cmd}?speed=${spd()}`;
   try {
     const r = await fetch(url);
@@ -597,6 +744,69 @@ async function sendCmd(cmd) {
     log(`HTTP [${cmd}]: ${e.message}`, 'err');
     badge('http', 'off', 'HTTP');
   }
+}
+
+async function dispatchDriveCmd(cmd) {
+  if (commandInFlight) {
+    queuedDriveCmd = cmd;
+    return;
+  }
+
+  if (cmd === activeDriveCmd) return;
+
+  commandInFlight = true;
+  try {
+    await sendCmd(cmd);
+    activeDriveCmd = cmd;
+  } finally {
+    commandInFlight = false;
+    if (queuedDriveCmd && queuedDriveCmd !== activeDriveCmd) {
+      const nextCmd = queuedDriveCmd;
+      queuedDriveCmd = null;
+      dispatchDriveCmd(nextCmd);
+    } else {
+      queuedDriveCmd = null;
+    }
+  }
+}
+
+function setBanner(cmd) {
+  const banner = document.getElementById('cmd-banner');
+  banner.textContent = cmd === 'stop' ? '■ DỪNG' : `${LABEL[cmd]} — ${spd()} rad/s`;
+  banner.className = 'show';
+}
+
+function clearBanner() {
+  const banner = document.getElementById('cmd-banner');
+  banner.className = '';
+}
+
+function scheduleStop() {
+  clearTimeout(stopTimer);
+  stopTimer = setTimeout(() => {
+    dispatchDriveCmd('stop');
+    clearBanner();
+  }, 60);
+}
+
+function cancelScheduledStop() {
+  clearTimeout(stopTimer);
+  stopTimer = null;
+}
+
+function activateDrive(cmd) {
+  cancelScheduledStop();
+  setBanner(cmd);
+  dispatchDriveCmd(cmd);
+}
+
+function releaseDrive(cmd) {
+  if (cmd === 'stop') {
+    dispatchDriveCmd('stop');
+    clearBanner();
+    return;
+  }
+  scheduleStop();
 }
 
 async function pingRobot() {
@@ -625,6 +835,8 @@ function updateReadout(left, right, cmd) {
 
 function startPoll(h) {
   if (pollTimer) clearInterval(pollTimer);
+  // Polling is lightweight and only updates readout state. It is separate from
+  // command dispatch so the UI still works even if the user never clicks Ping.
   pollTimer = setInterval(async () => {
     try {
       const r = await fetch(`http://${h}/status`);
@@ -639,35 +851,52 @@ const LABEL = {forward:'▲ TIẾN',backward:'▼ LÙI',left:'◄ TRÁI',right:'
 
 document.querySelectorAll('.dpad-btn').forEach(btn => {
   const cmd = btn.dataset.cmd;
-  const press   = () => { btn.classList.add('on');
-    document.getElementById('cmd-banner').textContent = cmd==='stop'?'■ DỪNG':`${LABEL[cmd]} — ${spd()} rad/s`;
-    document.getElementById('cmd-banner').className = 'show';
-    sendCmd(cmd); };
-  const release = () => { btn.classList.remove('on');
-    if (cmd !== 'stop') { sendCmd('stop'); document.getElementById('cmd-banner').className=''; }};
-  btn.addEventListener('mousedown',  press);
-  btn.addEventListener('mouseup',    release);
-  btn.addEventListener('mouseleave', release);
-  btn.addEventListener('touchstart', e => { e.preventDefault(); press(); });
-  btn.addEventListener('touchend',   e => { e.preventDefault(); release(); });
+  // Pointer events unify mouse + touch handling and reduce duplicate press/
+  // release sequences that previously made the robot jitter or miss stop/start.
+  const press = e => {
+    e.preventDefault();
+    btn.classList.add('on');
+    activateDrive(cmd);
+  };
+  const release = e => {
+    e.preventDefault();
+    btn.classList.remove('on');
+    releaseDrive(cmd);
+  };
+  btn.addEventListener('pointerdown', press);
+  btn.addEventListener('pointerup', release);
+  btn.addEventListener('pointercancel', release);
+  btn.addEventListener('pointerleave', e => {
+    if (e.buttons) release(e);
+  });
 });
 
 // ── Keyboard ──────────────────────────────────────────────────────────────────
 const KEYS = {ArrowUp:'forward',ArrowDown:'backward',ArrowLeft:'left',ArrowRight:'right',' ':'stop'};
 const held = new Set();
+// Track held keys so auto-repeat from the browser does not spam duplicate HTTP
+// commands while a movement key is being held down.
 document.addEventListener('keydown', e => {
   const cmd = KEYS[e.key];
   if (!cmd || held.has(e.key)) return;
   e.preventDefault(); held.add(e.key);
+  cancelScheduledStop();
   document.getElementById('db-'+cmd)?.classList.add('on');
-  sendCmd(cmd);
+  activateDrive(cmd);
 });
 document.addEventListener('keyup', e => {
   const cmd = KEYS[e.key];
   if (!cmd) return;
   held.delete(e.key);
   document.getElementById('db-'+cmd)?.classList.remove('on');
-  if (cmd !== 'stop') sendCmd('stop');
+  releaseDrive(cmd);
+});
+
+window.addEventListener('blur', () => {
+  held.clear();
+  document.querySelectorAll('.dpad-btn').forEach(btn => btn.classList.remove('on'));
+  dispatchDriveCmd('stop');
+  clearBanner();
 });
 </script>
 </body>

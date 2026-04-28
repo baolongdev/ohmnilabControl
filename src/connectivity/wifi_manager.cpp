@@ -42,7 +42,14 @@ void wifiClearCredentials() {
 void wifiBeginConnect(const String& ssid, const String& password) {
     s_ssid     = ssid;
     s_password = password;
+
+    // A previous BLE-triggered scan or stale STA session can leave the radio in
+    // a state where the first begin() attempt is flaky. Clear scan results and
+    // disconnect cleanly before starting a fresh connect attempt.
+    WiFi.scanDelete();
+    WiFi.disconnect(true, true);
     WiFi.mode(WIFI_STA);
+    delay(100);
 
     if (password.length() == 0) {
         WiFi.begin(ssid.c_str());

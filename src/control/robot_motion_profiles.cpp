@@ -1,6 +1,6 @@
 #include "robot_motion_profiles.h"
 
-#include "config.h"
+#include "../config.h"
 #include "motion.h"
 #include "motor_control.h"
 
@@ -101,6 +101,9 @@ static void applyCommand(MotionProfileCommand cmd) {
     }
 }
 
+// Profiles are tracked relative to the motor angles at the moment the command
+// starts. This keeps timed/distance/turn logic non-blocking and independent of
+// the robot's absolute pose in the room.
 static void captureStartPose() {
     s_leftStartAngle = motor.shaft_angle;
     s_rightStartAngle = motor1.shaft_angle;
@@ -114,10 +117,14 @@ static float rightTravelMeters() {
     return (motor1.shaft_angle - s_rightStartAngle) * wheel_radius_m;
 }
 
+// Forward progress is estimated from the mean wheel travel. This assumes both
+// wheels track reasonably well and there is limited slip.
 static float forwardProgressMeters() {
     return (leftTravelMeters() + rightTravelMeters()) * 0.5f;
 }
 
+// Heading is derived from differential wheel travel using the configured wheel
+// track. This is a simple dead-reckoning estimate, not a fused IMU heading.
 static float headingProgressDeg() {
     float headingRad = (rightTravelMeters() - leftTravelMeters()) / wheel_track_m;
     return headingRad * 180.0f / PI;
@@ -202,6 +209,8 @@ void motionProfileLoop() {
     if (s_mode == PROFILE_NONE) return;
 
     unsigned long elapsedMs = millis() - s_startedMs;
+    // Only one profile mode can be active at a time, so each branch can stop
+    // the robot and exit immediately once its completion condition is reached.
     if (s_mode == PROFILE_TIMED) {
         if (elapsedMs >= s_durationMs) {
             motionProfileStop();

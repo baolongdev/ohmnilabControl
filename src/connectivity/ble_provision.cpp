@@ -1,6 +1,6 @@
 #include "ble_provision.h"
 #include "wifi_manager.h"
-#include "config.h"
+#include "../config.h"
 
 #include <BLEDevice.h>
 #include <BLEServer.h>
@@ -14,7 +14,9 @@ static String s_ssid;
 static String s_password;
 static bool   s_hasCredentials  = false;
 
-// Scan state — non-blocking, processed in bleProvisionLoop()
+// Scan state — non-blocking, processed in bleProvisionLoop().
+// BLE callbacks only flip flags; all WiFi operations stay on the main loop side
+// to avoid crossing BLE task context with WiFi driver calls.
 static volatile bool s_scanRequested = false;
 static bool          s_scanning      = false;
 static int           s_scanCount     = 0;
@@ -114,6 +116,9 @@ void bleProvisionSetup() {
     Serial.println("[BLE]   0001=SSID  0002=PASS  0003=STATUS  0004=CMD");
 }
 
+// BLE and WiFi scans share the same radio, so scan results are streamed back to
+// the BLE client gradually from loop() instead of doing any blocking work in a
+// callback.
 void bleProvisionLoop() {
     if (!s_bleActive) return;
 
@@ -164,6 +169,9 @@ void bleProvisionLoop() {
         notify("SCAN_END:" + String(s_scanCount));
         WiFi.scanDelete();
         Serial.println("[WiFiScan] Done. Results sent via BLE.");
+        s_scanning = false;
+        s_scanRequested = false;
+        s_lastNotify = 0;
         s_scanIdx   = -1;
         s_scanCount = 0;
     }
@@ -173,6 +181,13 @@ void bleStartScan() {
     if (!s_bleActive) return;
     if (s_scanning || s_scanIdx >= 0) {
         Serial.println("[WiFiScan] Already scanning, skipped.");
+        return;
+    }
+    // Do not tear down an active STA session just to perform a BLE-triggered
+    // scan; runtime operation has higher priority than provisioning discovery.
+    if (WiFi.status() == WL_CONNECTED) {
+        notify("SCAN_BUSY");
+        Serial.println("[WiFiScan] Skipped because WiFi is connected.");
         return;
     }
     Serial.println("[WiFiScan] Starting async scan...");
@@ -204,6 +219,14 @@ void bleStartAdvertising() {
 
 void bleForceStop() {
     if (!s_bleActive) return;
+    // Clear scan bookkeeping before deinit so a future bleProvisionSetup()
+    // always starts from a clean provisioning state.
+    s_scanRequested = false;
+    s_scanning = false;
+    s_scanCount = 0;
+    s_scanIdx = -1;
+    s_lastNotify = 0;
+    WiFi.scanDelete();
     BLEDevice::deinit(true);
     s_bleActive  = false;
     s_statusChar = nullptr;

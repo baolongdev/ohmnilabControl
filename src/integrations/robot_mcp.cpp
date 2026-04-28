@@ -1,10 +1,10 @@
 #include "robot_mcp.h"
-#include "motion.h"
-#include "config.h"
-#include "config_nvs.h"
-#include "motor_control.h"
-#include "robot_actions.h"
-#include "robot_motion_profiles.h"
+#include "../control/motion.h"
+#include "../config.h"
+#include "../storage/config_nvs.h"
+#include "../control/motor_control.h"
+#include "../control/robot_actions.h"
+#include "../control/robot_motion_profiles.h"
 
 #include <Arduino.h>
 #include <WiFi.h>
@@ -15,6 +15,8 @@ RobotMCP::RobotMCP(const char* endpoint) : _endpoint(endpoint ? endpoint : "") {
     s_instance = this;
 }
 
+// begin() can be called again after a failed or abandoned connection attempt.
+// The app-level state machine is responsible for deciding when retries happen.
 void RobotMCP::begin() {
     _client.begin(_endpoint.c_str(), RobotMCP::_onConnection);
 }
@@ -91,6 +93,10 @@ static unsigned long jsonMsOr(const JsonDocument& doc, const char* key, unsigned
 void RobotMCP::registerTools() {
     if (_toolRegistered) return;
     _toolRegistered = true;
+
+    // Tool registration happens once per process lifetime after the first
+    // successful MCP connection. The callbacks themselves stay lightweight and
+    // dispatch into the local control modules.
 
     _client.registerTool(
         "move_forward",

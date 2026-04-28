@@ -1,6 +1,6 @@
 #include "config_nvs.h"
-#include "config.h"
-#include "motor_control.h"
+#include "../config.h"
+#include "../control/motor_control.h"
 
 #include <Preferences.h>
 

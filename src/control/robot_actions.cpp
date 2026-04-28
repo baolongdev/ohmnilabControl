@@ -1,6 +1,6 @@
 #include "robot_actions.h"
 #include "motion.h"
-#include "config.h"
+#include "../config.h"
 #include "motor_control.h"
 
 #include <Arduino.h>
@@ -45,6 +45,8 @@ static int s_stepCount = 0;
 static ActionCommand s_randomCmd = CMD_STOP;
 static unsigned long s_randomStepMs = 0;
 
+// Actions are short scripted command sequences layered on top of the same
+// motion primitives used by HTTP/serial/MCP. Only one action can run at a time.
 static const char* modeName(ActionMode mode) {
     switch (mode) {
         case ACTION_TURN_LEFT_RIGHT: return "ACTION1";
@@ -98,6 +100,8 @@ static void applyCommand(ActionCommand cmd) {
 }
 
 static void beginSequencedAction(ActionMode mode, float speed) {
+    // s_steps[] must already be populated by the caller before entering here.
+    // This helper only initializes timing/state and kicks off the first step.
     s_mode = mode;
     s_speed = clampActionSpeed(speed);
     s_stepIndex = 0;
@@ -280,6 +284,8 @@ bool actionStartEmotionShy(float speed, unsigned long stepMs) {
 }
 
 static void pickRandomStep() {
+    // Random mode deliberately chooses only movement commands here; overall stop
+    // behavior is governed by the enclosing action duration and actionStop().
     int pick = random(0, 4);
     s_randomCmd = (ActionCommand)(CMD_FORWARD + pick);
     s_randomStepMs = (unsigned long)random(350, 800);
@@ -323,6 +329,7 @@ void actionLoop() {
     unsigned long now = millis();
 
     if (s_mode == ACTION_RANDOM_MOVE) {
+        // Random mode has per-step timing plus a separate total action timeout.
         if (now - s_actionStarted >= s_actionDuration) {
             actionStop();
             return;
@@ -334,6 +341,7 @@ void actionLoop() {
         return;
     }
 
+    // Sequenced modes walk a prebuilt table of commands and durations.
     if (s_stepIndex >= s_stepCount) {
         actionStop();
         return;

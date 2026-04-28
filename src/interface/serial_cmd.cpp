@@ -1,11 +1,11 @@
 #include "serial_cmd.h"
-#include "motion.h"
-#include "motor_control.h"
-#include "wifi_manager.h"
-#include "config.h"
-#include "config_nvs.h"
-#include "robot_actions.h"
-#include "robot_motion_profiles.h"
+#include "../control/motion.h"
+#include "../control/motor_control.h"
+#include "../connectivity/wifi_manager.h"
+#include "../config.h"
+#include "../storage/config_nvs.h"
+#include "../control/robot_actions.h"
+#include "../control/robot_motion_profiles.h"
 
 #include <Arduino.h>
 #include <WiFi.h>
@@ -65,6 +65,8 @@ static void printStatus() {
     }
 
     // ── Motion targets ────────────────────────────────────────────────────────
+    // target_left/target_right are the high-level commands feeding the fast FOC
+    // loop, not the measured wheel speeds themselves.
     section("MOTION TARGETS");
     Serial.printf("    target_left   : %+.2f rad/s\n", target_left);
     Serial.printf("    target_right  : %+.2f rad/s\n", target_right);
@@ -157,7 +159,8 @@ void handleSerial() {
     Serial.print(F(">> "));
     Serial.println(cmd);
 
-    // Full-word commands (case-insensitive)
+    // Full-word commands are handled first so they do not conflict with single-
+    // letter drive commands like F20 / B15.
     String up = cmd;
     up.toUpperCase();
 
@@ -180,7 +183,9 @@ void handleSerial() {
         return;
     }
 
-    // Movement commands — accept upper and lower case
+    // Movement commands are intentionally terse for quick bring-up over a serial
+    // terminal. Like HTTP/MCP, they stop scripted behaviors before applying a
+    // direct drive target.
     char  dir = toupper((unsigned char)cmd.charAt(0));
     float spd = cmd.substring(1).toFloat();
 
