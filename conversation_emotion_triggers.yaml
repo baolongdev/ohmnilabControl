@@ -1,0 +1,421 @@
+version: "1.0"
+purpose: >
+  Rule set de map noi dung hoi thoai thanh emotion action cho robot.
+  File nay danh cho agent/router o phia server ung dung, khong chay truc tiep tren ESP32.
+
+global_policy:
+  language: [vi, en, mixed]
+  default_cooldown_ms: 5000
+  burst_cooldown_ms: 8000
+  min_confidence: 0.62
+  max_emotion_actions_per_minute: 8
+  interrupt_policy:
+    can_interrupt: [emotion_disagree, emotion_happy, emotion_curious, emotion_excited, emotion_shy]
+    should_not_interrupt: [move_distance, turn_angle, move_timed]
+  ignore_when:
+    - robot_is_busy_with_navigation
+    - safety_lock_active
+    - user_explicitly_requests_stop
+  priority_order:
+    - emotion_disagree
+    - emotion_excited
+    - emotion_happy
+    - emotion_curious
+    - emotion_shy
+
+router_strategy:
+  matching:
+    exact_phrase_weight: 1.0
+    strong_keyword_weight: 0.7
+    weak_keyword_weight: 0.35
+    punctuation_bonus: 0.1
+    repeated_word_bonus: 0.15
+    all_caps_bonus: 0.15
+  conflict_resolution:
+    - if_multiple_emotions_match_pick_highest_score
+    - if_scores_close_under_0_15_pick_none
+    - if_negation_present_reduce_positive_emotion_score
+    - if_user_is_asking_a_question_prefer_curious_over_happy
+
+emotions:
+  - emotion: emotion_disagree
+    action: emotion_disagree
+    description: Lac trai-phai de the hien su khong dong y, phan doi, tu choi, can ngan lai.
+    cooldown_ms: 4500
+    confidence_threshold: 0.60
+    trigger_if_any:
+      vi:
+        strong:
+          - "khong"
+          - "khong dung"
+          - "sai roi"
+          - "sai"
+          - "dung lai"
+          - "dung"
+          - "thoi"
+          - "bo di"
+          - "khong duoc"
+          - "khong on"
+          - "khong hop ly"
+          - "toi khong dong y"
+          - "khong phai vay"
+          - "sai huong roi"
+          - "sai roi do"
+          - "khong nen"
+          - "khoan da"
+          - "tu tu"
+          - "de y"
+          - "can than"
+          - "nho nhe"
+          - "don’t"
+        weak:
+          - "ua"
+          - "oi khong"
+          - "thoi nao"
+          - "khong nha"
+          - "dung co"
+          - "thoi duoc roi"
+          - "that a"
+          - "hoi ky"
+      en:
+        strong:
+          - "no"
+          - "nope"
+          - "don't"
+          - "do not"
+          - "stop that"
+          - "that's wrong"
+          - "wrong"
+          - "not like that"
+          - "bad idea"
+          - "i disagree"
+          - "not okay"
+          - "don't do that"
+          - "hold on"
+          - "wait"
+          - "careful"
+          - "not good"
+          - "cut it out"
+        weak:
+          - "hmm no"
+          - "nah"
+          - "not really"
+          - "i don't think so"
+          - "maybe not"
+    trigger_patterns:
+      - "(?i)\\b(khong|không)\\b"
+      - "(?i)\\b(sai|wrong|nope|nah)\\b"
+      - "(?i)\\b(dung lai|stop that|do not|don't)\\b"
+    suppress_if_any:
+      - "khong sao"
+      - "khong tệ"
+      - "not bad"
+      - "no problem"
+      - "khong van de"
+    examples:
+      - "Không, làm lại đi."
+      - "Sai rồi, dừng lại."
+      - "Wait, not like that."
+      - "Đừng quay nữa."
+
+  - emotion: emotion_happy
+    action: emotion_happy
+    description: Quay vui ve de the hien niem vui, da, chuc mung, xac nhan thanh cong.
+    cooldown_ms: 6000
+    confidence_threshold: 0.64
+    trigger_if_any:
+      vi:
+        strong:
+          - "gioi qua"
+          - "tot lam"
+          - "hay qua"
+          - "chuẩn rồi"
+          - "chuan roi"
+          - "thanh cong roi"
+          - "ok roi"
+          - "xong roi"
+          - "qua da"
+          - "dep qua"
+          - "yeu qua"
+          - "de thuong qua"
+          - "qua tuyet"
+          - "qua dinh"
+          - "qua ngon"
+          - "tuyet voi"
+          - "lam tot lam"
+          - "ye"
+          - "yeah"
+        weak:
+          - "haha hay"
+          - "duoc do"
+          - "uoc gi"
+          - "vui nhi"
+          - "ok nhe"
+      en:
+        strong:
+          - "great"
+          - "awesome"
+          - "nice"
+          - "good job"
+          - "well done"
+          - "perfect"
+          - "we did it"
+          - "success"
+          - "amazing"
+          - "cute"
+          - "so cute"
+          - "love it"
+          - "excellent"
+          - "fantastic"
+          - "bravo"
+          - "yay"
+          - "woohoo"
+        weak:
+          - "pretty good"
+          - "not bad"
+          - "that works"
+          - "looks nice"
+    trigger_patterns:
+      - "(?i)\\b(great|awesome|yay|woohoo|tuyet voi|tuyệt vời|đỉnh|dinh)\\b"
+      - "(?i)\\b(gioi qua|giỏi quá|tot lam|tốt lắm|good job|well done)\\b"
+    suppress_if_any:
+      - "khong vui"
+      - "not happy"
+      - "great but stop"
+      - "good enough, stop"
+    examples:
+      - "Giỏi quá, chuẩn rồi."
+      - "Yay, làm được rồi."
+      - "Cute, I love it."
+      - "Tuyệt vời, thành công rồi."
+
+  - emotion: emotion_curious
+    action: emotion_curious
+    description: Quet quanh de the hien su to mo, tham do, dang can quan sat.
+    cooldown_ms: 5000
+    confidence_threshold: 0.61
+    trigger_if_any:
+      vi:
+        strong:
+          - "co gi vay"
+          - "có gì vậy"
+          - "cai gi do"
+          - "xem thu"
+          - "nhin quanh"
+          - "nghe gi khong"
+          - "co ai do"
+          - "hinh nhu"
+          - "de xem nao"
+          - "chuyen gi"
+          - "chuyện gì"
+          - "o dau"
+          - "co gi o do"
+          - "xem xung quanh"
+          - "quan sat"
+          - "tim xem"
+          - "kiem tra xem"
+        weak:
+          - "ha"
+          - "huh"
+          - "hmmm"
+          - "u la"
+          - "gi ta"
+      en:
+        strong:
+          - "what's that"
+          - "what was that"
+          - "look around"
+          - "take a look"
+          - "check around"
+          - "is someone there"
+          - "what happened"
+          - "where is it"
+          - "scan around"
+          - "have a look"
+          - "go inspect"
+        weak:
+          - "huh"
+          - "hmm"
+          - "really"
+          - "interesting"
+    trigger_patterns:
+      - "(?i)\\b(co gi vay|có gì vậy|what's that|what was that|look around|scan around)\\b"
+      - "(?i)\\b(chuyen gi|chuyện gì|what happened|where is it)\\b"
+    suppress_if_any:
+      - "xem xong roi"
+      - "ignore it"
+      - "don't look"
+    examples:
+      - "Có gì vậy, nhìn quanh xem."
+      - "What was that? Look around."
+      - "Kiểm tra thử bên kia."
+      - "Scan around a bit."
+
+  - emotion: emotion_excited
+    action: emotion_excited
+    description: Chuyen dong nhanh, nhun nhao de the hien su phan khich, gap gap, so sot.
+    cooldown_ms: 7000
+    confidence_threshold: 0.66
+    trigger_if_any:
+      vi:
+        strong:
+          - "nhanh len"
+          - "mau len"
+          - "wow"
+          - "ui da"
+          - "da qua"
+          - "quay len"
+          - "hung khoi qua"
+          - "phat len"
+          - "qua phe"
+          - "hay qua di"
+          - "nao len"
+          - "len nao"
+          - "xung len"
+          - "quat manh vao"
+        weak:
+          - "hehe"
+          - "ha ha"
+          - "ok biet roi"
+      en:
+        strong:
+          - "come on"
+          - "let's go"
+          - "so exciting"
+          - "that's hype"
+          - "go go go"
+          - "move it"
+          - "so pumped"
+          - "this is awesome"
+          - "let's do it"
+          - "go faster"
+        weak:
+          - "haha"
+          - "woo"
+          - "niceee"
+    trigger_patterns:
+      - "(?i)\\b(let's go|go go go|nao len|nào lên|wow|go faster|mau len|nhanh len)\\b"
+    suppress_if_any:
+      - "nhanh nhưng im"
+      - "don't get excited"
+      - "calm down"
+    examples:
+      - "Wow, nào lên!"
+      - "Let's go, go go go!"
+      - "Nhanh lên, phấn khích quá."
+      - "This is awesome, move it!"
+
+  - emotion: emotion_shy
+    action: emotion_shy
+    description: Rut nhe, lui lai mot chut de the hien su ngai ngung, de thuong, mem hon.
+    cooldown_ms: 6500
+    confidence_threshold: 0.65
+    trigger_if_any:
+      vi:
+        strong:
+          - "ngai qua"
+          - "xau ho qua"
+          - "thoi ngai"
+          - "xin loi nha"
+          - "nhe thoi"
+          - "be be thoi"
+          - "de thuong qua"
+          - "dung manh qua"
+          - "tu tu thoi"
+          - "e the"
+          - "rụt rè"
+          - "rut re"
+        weak:
+          - "hihi"
+          - "e hem"
+          - "thoi ma"
+      en:
+        strong:
+          - "shy"
+          - "a little shy"
+          - "sorry"
+          - "go easy"
+          - "be gentle"
+          - "that's embarrassing"
+          - "bashful"
+          - "timid"
+        weak:
+          - "hehe shy"
+          - "oops"
+    trigger_patterns:
+      - "(?i)\\b(ngai qua|xau ho|xấu hổ|sorry|shy|be gentle|go easy)\\b"
+    suppress_if_any:
+      - "sorry but hurry up"
+      - "shy? no"
+    examples:
+      - "Ngại quá, nhẹ thôi."
+      - "Sorry, be gentle."
+      - "Xấu hổ ghê."
+      - "A little shy now."
+
+  - emotion: none
+    action: none
+    description: Khong du tin hieu de kich hoat emotion action.
+    fallback_when:
+      - informational_only
+      - neutral_question
+      - technical_command
+      - user_requests_no_motion
+      - confidence_below_threshold
+
+negation_rules:
+  negative_prefixes:
+    - "khong"
+    - "đừng"
+    - "dung"
+    - "chua"
+    - "not"
+    - "don't"
+    - "do not"
+    - "never"
+  invert_examples:
+    - text: "khong vui dau"
+      avoid: emotion_happy
+    - text: "don't be excited"
+      avoid: emotion_excited
+    - text: "khong can nhin quanh"
+      avoid: emotion_curious
+
+spam_control:
+  repeated_same_emotion_limit: 2
+  repeated_same_emotion_window_ms: 15000
+  decay_after_ms: 12000
+  disable_if_user_sends:
+    - "im"
+    - "đứng yên"
+    - "dung yen"
+    - "stop moving"
+    - "freeze"
+
+testing_matrix:
+  should_trigger:
+    emotion_disagree:
+      - "Không, sai rồi."
+      - "Nope, stop that."
+      - "Đừng làm vậy."
+    emotion_happy:
+      - "Tuyệt vời, giỏi lắm."
+      - "Yay, we did it."
+      - "Cute, love it."
+    emotion_curious:
+      - "Có gì vậy, nhìn quanh xem."
+      - "What was that? Check around."
+      - "Xem thử bên kia có gì."
+    emotion_excited:
+      - "Wow, nào lên!"
+      - "Let's go go go!"
+      - "Nhanh lên, phấn khích quá."
+    emotion_shy:
+      - "Ngại quá, nhẹ thôi."
+      - "Sorry, be gentle."
+      - "A little shy now."
+  should_not_trigger:
+    - "Mô tả lại tool move_distance cho tôi."
+    - "Không phải lúc này, chỉ giải thích thôi."
+    - "Please stop moving."
+    - "How does get_status work?"

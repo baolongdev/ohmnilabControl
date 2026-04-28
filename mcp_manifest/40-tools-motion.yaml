@@ -1,0 +1,184 @@
+tools:
+  - name: move_forward
+    description: >
+      Cho robot chạy tiến ngay với tốc độ đặt trước.
+      Đây là lệnh vận tốc trực tiếp, không tự dừng theo thời gian hay quãng đường.
+    inputSchema:
+      type: object
+      properties:
+        speed:
+          type: number
+          description: "Tốc độ mong muốn, đơn vị rad/s. Firmware sẽ clamp theo velocity_limit hiện tại."
+          default: 20
+      required: []
+    response: >
+      Trả về xác nhận lệnh vừa áp vào, ví dụ:
+      `{ "ok": true, "cmd": "forward", "speed": 20.000 }`
+
+  - name: move_backward
+    description: >
+      Cho robot chạy lùi ngay với tốc độ đặt trước.
+      Đây là lệnh vận tốc trực tiếp, không tự dừng theo thời gian hay quãng đường.
+    inputSchema:
+      type: object
+      properties:
+        speed:
+          type: number
+          description: "Tốc độ mong muốn, đơn vị rad/s. Firmware sẽ clamp theo velocity_limit hiện tại."
+          default: 20
+      required: []
+    response: >
+      Trả về xác nhận lệnh vừa áp vào, ví dụ:
+      `{ "ok": true, "cmd": "backward", "speed": 20.000 }`
+
+  - name: turn_left
+    description: >
+      Quay robot tại chỗ sang trái bằng lệnh vận tốc trực tiếp.
+      Lệnh này giữ quay liên tục cho tới khi có lệnh khác hoặc gọi `stop`.
+    inputSchema:
+      type: object
+      properties:
+        speed:
+          type: number
+          description: "Tốc độ quay mong muốn, đơn vị rad/s."
+          default: 15
+      required: []
+    response: >
+      Trả về xác nhận lệnh vừa áp vào, ví dụ:
+      `{ "ok": true, "cmd": "turn_left", "speed": 15.000 }`
+
+  - name: turn_right
+    description: >
+      Quay robot tại chỗ sang phải bằng lệnh vận tốc trực tiếp.
+      Lệnh này giữ quay liên tục cho tới khi có lệnh khác hoặc gọi `stop`.
+    inputSchema:
+      type: object
+      properties:
+        speed:
+          type: number
+          description: "Tốc độ quay mong muốn, đơn vị rad/s."
+          default: 15
+      required: []
+    response: >
+      Trả về xác nhận lệnh vừa áp vào, ví dụ:
+      `{ "ok": true, "cmd": "turn_right", "speed": 15.000 }`
+
+  - name: stop
+    description: >
+      Dừng robot ngay lập tức.
+      Lệnh này cũng ngắt motion profile hoặc action preset đang chạy.
+    inputSchema:
+      type: object
+      properties: {}
+      required: []
+    response: >
+      Trả về xác nhận đã dừng robot:
+      `{ "ok": true, "cmd": "stop" }`
+
+  - name: get_status
+    description: >
+      Đọc nhanh trạng thái vận tốc mục tiêu hiện tại của hai bánh, cùng với giới hạn vận tốc runtime
+      và trạng thái kết nối WiFi.
+    inputSchema:
+      type: object
+      properties: {}
+      required: []
+    response: >
+      Trả về JSON trạng thái hiện tại, ví dụ:
+      `{ "ok": true, "target_left": -20.000, "target_right": 20.000, "velocity_limit": 40.000, "wifi": true, "ip": "192.168.1.50" }`
+
+  - name: move_timed
+    description: >
+      Chạy robot theo một hướng xác định trong một khoảng thời gian cụ thể rồi tự dừng.
+      Tool này chạy non-blocking, phù hợp khi agent muốn khởi động lệnh rồi theo dõi tiếp bằng status.
+    inputSchema:
+      type: object
+      properties:
+        direction:
+          type: string
+          description: "Hướng chạy: forward | backward | turn_left | turn_right."
+          default: forward
+        speed:
+          type: number
+          description: "Tốc độ mong muốn, đơn vị rad/s."
+          default: 15
+        duration_ms:
+          type: integer
+          description: "Thời gian chạy, range 100-60000 ms."
+          default: 1000
+      required: []
+    response: >
+      Trả về JSON trạng thái motion profile vừa khởi động, ví dụ:
+      `{ "ok": true, "running": true, "profile": "timed_move", "command": "forward", "speed": 15.000, "elapsed_ms": 5, "remaining_ms": 995, "target_distance_m": 0.0000, "progress_distance_m": 0.0000, "target_angle_deg": 0.000, "progress_angle_deg": 0.000 }`
+
+  - name: move_distance
+    description: >
+      Chạy tiến hoặc lùi theo quãng đường mục tiêu, tính theo mô hình bánh xe của robot.
+      Tool này phù hợp cho các lệnh di chuyển có đích tương đối thay vì chỉ áp vận tốc liên tục.
+    inputSchema:
+      type: object
+      properties:
+        direction:
+          type: string
+          description: "Hướng chạy: forward | backward."
+          default: forward
+        speed:
+          type: number
+          description: "Tốc độ mong muốn, đơn vị rad/s."
+          default: 20
+        distance_m:
+          type: number
+          description: "Quãng đường mục tiêu, đơn vị mét."
+          default: 0.5
+      required: []
+    response: >
+      Trả về JSON trạng thái motion profile vừa khởi động, ví dụ:
+      `{ "ok": true, "running": true, "profile": "distance_move", "command": "forward", "speed": 20.000, "elapsed_ms": 6, "remaining_ms": 0, "target_distance_m": 0.5000, "progress_distance_m": 0.0000, "target_angle_deg": 0.000, "progress_angle_deg": 0.000 }`
+
+  - name: turn_angle
+    description: >
+      Quay robot sang trái hoặc phải theo góc mục tiêu, dùng chênh lệch quãng đường hai bánh để ước tính góc quay.
+      Tool này chạy non-blocking và tự dừng khi đạt góc yêu cầu.
+    inputSchema:
+      type: object
+      properties:
+        direction:
+          type: string
+          description: "Hướng quay: left | right."
+          default: left
+        speed:
+          type: number
+          description: "Tốc độ quay mong muốn, đơn vị rad/s."
+          default: 15
+        angle_deg:
+          type: number
+          description: "Góc mục tiêu, đơn vị độ."
+          default: 90
+      required: []
+    response: >
+      Trả về JSON trạng thái motion profile vừa khởi động, ví dụ:
+      `{ "ok": true, "running": true, "profile": "turn_angle", "command": "turn_left", "speed": 15.000, "elapsed_ms": 7, "remaining_ms": 0, "target_distance_m": 0.0000, "progress_distance_m": 0.0000, "target_angle_deg": 90.000, "progress_angle_deg": 0.000 }`
+
+  - name: get_motion_status
+    description: >
+      Đọc trạng thái motion profile đang chạy, gồm loại profile, hướng lệnh, thời gian đã chạy,
+      quãng đường tiến triển và góc tiến triển nếu có.
+    inputSchema:
+      type: object
+      properties: {}
+      required: []
+    response: >
+      Trả về JSON trạng thái hiện tại, ví dụ:
+      `{ "ok": true, "running": true, "profile": "distance_move", "command": "forward", "speed": 20.000, "elapsed_ms": 420, "remaining_ms": 0, "target_distance_m": 0.5000, "progress_distance_m": 0.1832, "target_angle_deg": 0.000, "progress_angle_deg": 0.000 }`
+
+  - name: stop_motion
+    description: >
+      Dừng motion profile đang chạy ngay lập tức và đưa robot về trạng thái stop.
+      Dùng khi agent cần hủy một lệnh chạy theo thời gian, góc hoặc quãng đường giữa chừng.
+    inputSchema:
+      type: object
+      properties: {}
+      required: []
+    response: >
+      Trả về JSON trạng thái sau khi dừng, ví dụ:
+      `{ "ok": true, "running": false, "profile": "none", "command": "stop", "speed": 20.000, "elapsed_ms": 0, "remaining_ms": 0, "target_distance_m": 0.0000, "progress_distance_m": 0.0000, "target_angle_deg": 0.000, "progress_angle_deg": 0.000 }`

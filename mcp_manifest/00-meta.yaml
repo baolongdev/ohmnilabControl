@@ -1,0 +1,6 @@
+name: OhmniRobot
+version: "1.0.0"
+description: >
+  Robot 2 bánh differential drive điều khiển bằng SimpleFOC.
+  MCP tools chạy on-device trên ESP32 WROOM-32.
+  Kết nối: BLE provisioning -> WiFi -> WebSocket MCP.

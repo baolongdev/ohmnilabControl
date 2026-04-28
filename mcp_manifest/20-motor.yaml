@@ -1,0 +1,24 @@
+motor:
+  pole_pairs: 7
+  voltage_supply: 17.5    # V
+  voltage_limit: 10       # V
+  velocity_limit: 40      # rad/s
+  pid:
+    P: 0.1
+    I: 1.0
+    D: 0.0
+  lpf_tf: 0.01            # s
+  runtime_adjustable:
+    storage: NVS namespace motor-cfg
+    tools: [get_config, set_pid, set_limits, save_config, load_config, reset_config]
+  motion_profiles:
+    engine: non-blocking profile runner in src/robot_motion_profiles.cpp
+    geometry:
+      wheel_radius_m: 0.035
+      wheel_track_m: 0.180
+    tools: [move_timed, move_distance, turn_angle, get_motion_status, stop_motion]
+  action_presets:
+    engine: non-blocking state machine in src/robot_actions.cpp
+    tools: [ACTION1, ACTION2, ACTION3, ACTION4, ACTION5, ACTION6, emotion_disagree, emotion_happy, emotion_curious, emotion_excited, emotion_shy, action_random_move, get_action_status, stop_action]
+  deadzone: 5.0           # rad/s - clamp tối thiểu
+  stop_zone: 1.0          # rad/s - về 0

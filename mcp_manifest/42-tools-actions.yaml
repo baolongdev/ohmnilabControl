@@ -1,0 +1,268 @@
+tools:
+  - name: ACTION1
+    description: >
+      Thực hiện bài test quay trái một nhịp, nghỉ ngắn, rồi quay phải một nhịp.
+      Action chạy non-blocking nên có thể gọi `get_action_status` để theo dõi trong lúc robot đang chạy.
+    inputSchema:
+      type: object
+      properties:
+        speed:
+          type: number
+          description: "Tốc độ quay mong muốn, đơn vị rad/s."
+          default: 15
+        step_ms:
+          type: integer
+          description: "Thời gian cho mỗi pha quay trái/phải, range 200-5000 ms."
+          default: 900
+      required: []
+    response: >
+      Trả về trạng thái action hiện tại dưới dạng JSON, ví dụ:
+      `{ "ok": true, "running": true, "action": "ACTION1", "current": "turn_left", "step": 0, "speed": 15.000, "elapsed_ms": 12, "remaining_ms": 1788 }`
+
+  - name: ACTION2
+    description: >
+      Thực hiện bài test chạy tiến một nhịp, dừng ngắn, rồi lùi một nhịp.
+      Action chạy non-blocking nên có thể kiểm tra tiến độ bằng `get_action_status`.
+    inputSchema:
+      type: object
+      properties:
+        speed:
+          type: number
+          description: "Tốc độ tiến/lùi mong muốn, đơn vị rad/s."
+          default: 18
+        step_ms:
+          type: integer
+          description: "Thời gian cho mỗi pha tiến/lùi, range 200-5000 ms."
+          default: 1000
+      required: []
+    response: >
+      Trả về trạng thái action hiện tại dưới dạng JSON, ví dụ:
+      `{ "ok": true, "running": true, "action": "ACTION2", "current": "forward", "step": 0, "speed": 18.000, "elapsed_ms": 9, "remaining_ms": 1991 }`
+
+  - name: ACTION3
+    description: >
+      Chạy một bài zigzag ngắn: tiến, đổi hướng trái, tiến, đổi hướng phải rồi tiến thêm một nhịp trước khi dừng.
+      Phù hợp để demo phản ứng đổi hướng liên tiếp mà vẫn giữ chuyển động mượt và non-blocking.
+    inputSchema:
+      type: object
+      properties:
+        speed:
+          type: number
+          description: "Tốc độ mong muốn, đơn vị rad/s."
+          default: 15
+        step_ms:
+          type: integer
+          description: "Thời gian cơ bản cho mỗi nhịp, range 200-5000 ms."
+          default: 700
+      required: []
+    response: >
+      Trả về trạng thái action hiện tại dưới dạng JSON, ví dụ:
+      `{ "ok": true, "running": true, "action": "ACTION3", "current": "forward", "step": 0, "speed": 15.000, "elapsed_ms": 8, "remaining_ms": 2450 }`
+
+  - name: ACTION4
+    description: >
+      Thực hiện một nhịp quét trái-phải-trái kiểu scan sweep, phù hợp để robot “nhìn quanh” hoặc demo phản ứng xoay.
+      Action này giữ logic non-blocking nên có thể poll trạng thái trong lúc đang quét.
+    inputSchema:
+      type: object
+      properties:
+        speed:
+          type: number
+          description: "Tốc độ quay mong muốn, đơn vị rad/s."
+          default: 16
+        step_ms:
+          type: integer
+          description: "Thời gian quét cơ bản, range 200-5000 ms."
+          default: 600
+      required: []
+    response: >
+      Trả về trạng thái action hiện tại dưới dạng JSON, ví dụ:
+      `{ "ok": true, "running": true, "action": "ACTION4", "current": "turn_left", "step": 0, "speed": 16.000, "elapsed_ms": 11, "remaining_ms": 3000 }`
+
+  - name: ACTION5
+    description: >
+      Chạy một chuỗi spin burst ngắn với các nhịp quay đổi chiều liên tục.
+      Mẫu này hợp để stress test phản ứng quay và độ dứt của robot ở tốc độ vừa phải.
+    inputSchema:
+      type: object
+      properties:
+        speed:
+          type: number
+          description: "Tốc độ quay mong muốn, đơn vị rad/s."
+          default: 14
+        step_ms:
+          type: integer
+          description: "Thời gian cơ bản cho chuỗi burst, range 200-5000 ms."
+          default: 500
+      required: []
+    response: >
+      Trả về trạng thái action hiện tại dưới dạng JSON, ví dụ:
+      `{ "ok": true, "running": true, "action": "ACTION5", "current": "turn_left", "step": 0, "speed": 14.000, "elapsed_ms": 6, "remaining_ms": 1500 }`
+
+  - name: ACTION6
+    description: >
+      Chạy một vòng patrol ngắn gồm tiến, đổi hướng, tiến tiếp, chỉnh lại hướng rồi lùi nhẹ trước khi dừng.
+      Action này tạo cảm giác robot tự đi kiểm tra một khu vực nhỏ.
+    inputSchema:
+      type: object
+      properties:
+        speed:
+          type: number
+          description: "Tốc độ mong muốn, đơn vị rad/s."
+          default: 16
+        step_ms:
+          type: integer
+          description: "Thời gian cơ bản cho mỗi nhịp, range 200-5000 ms."
+          default: 650
+      required: []
+    response: >
+      Trả về trạng thái action hiện tại dưới dạng JSON, ví dụ:
+      `{ "ok": true, "running": true, "action": "ACTION6", "current": "forward", "step": 0, "speed": 16.000, "elapsed_ms": 7, "remaining_ms": 2437 }`
+
+  - name: emotion_disagree
+    description: >
+      Lắc trái-phải liên tục để thể hiện sự không đồng ý hoặc phản đối nhẹ.
+      Đây là mẫu rất dễ hiểu khi nhìn từ xa vì thân robot sẽ lắc đầu rõ ràng.
+    inputSchema:
+      type: object
+      properties:
+        speed:
+          type: number
+          description: "Tốc độ quay mong muốn, đơn vị rad/s."
+          default: 15
+        step_ms:
+          type: integer
+          description: "Độ dài mỗi nhịp lắc, range 200-5000 ms."
+          default: 450
+      required: []
+    response: >
+      Trả về trạng thái action hiện tại dưới dạng JSON, ví dụ:
+      `{ "ok": true, "running": true, "action": "emotion_disagree", "current": "turn_left", "step": 0, "speed": 15.000, "elapsed_ms": 10, "remaining_ms": 2210 }`
+
+  - name: emotion_happy
+    description: >
+      Quay vòng vòng theo cùng một chiều để tạo cảm giác vui vẻ, hứng khởi hoặc vừa hoàn thành một việc gì đó.
+      Mẫu này nhìn giống robot đang “nhảy mừng”.
+    inputSchema:
+      type: object
+      properties:
+        speed:
+          type: number
+          description: "Tốc độ quay mong muốn, đơn vị rad/s."
+          default: 16
+        step_ms:
+          type: integer
+          description: "Độ dài mỗi nhịp quay, range 200-5000 ms."
+          default: 700
+      required: []
+    response: >
+      Trả về trạng thái action hiện tại dưới dạng JSON, ví dụ:
+      `{ "ok": true, "running": true, "action": "emotion_happy", "current": "turn_left", "step": 0, "speed": 16.000, "elapsed_ms": 8, "remaining_ms": 2470 }`
+
+  - name: emotion_curious
+    description: >
+      Quét trái-phải chậm rãi như đang quan sát xung quanh hoặc cố hiểu chuyện gì vừa xảy ra.
+      Phù hợp để biểu đạt sự tò mò.
+    inputSchema:
+      type: object
+      properties:
+        speed:
+          type: number
+          description: "Tốc độ quay mong muốn, đơn vị rad/s."
+          default: 15
+        step_ms:
+          type: integer
+          description: "Độ dài mỗi nhịp quét, range 200-5000 ms."
+          default: 550
+      required: []
+    response: >
+      Trả về trạng thái action hiện tại dưới dạng JSON, ví dụ:
+      `{ "ok": true, "running": true, "action": "emotion_curious", "current": "turn_left", "step": 0, "speed": 15.000, "elapsed_ms": 9, "remaining_ms": 2811 }`
+
+  - name: emotion_excited
+    description: >
+      Chạy nhún nhảy, lao lên ngắn rồi đổi hướng nhanh để thể hiện sự phấn khích hoặc sốt sắng.
+      Đây là mẫu chuyển động giàu năng lượng hơn các preset thông thường.
+    inputSchema:
+      type: object
+      properties:
+        speed:
+          type: number
+          description: "Tốc độ mong muốn, đơn vị rad/s."
+          default: 17
+        step_ms:
+          type: integer
+          description: "Độ dài mỗi nhịp, range 200-5000 ms."
+          default: 450
+      required: []
+    response: >
+      Trả về trạng thái action hiện tại dưới dạng JSON, ví dụ:
+      `{ "ok": true, "running": true, "action": "emotion_excited", "current": "forward", "step": 0, "speed": 17.000, "elapsed_ms": 7, "remaining_ms": 1848 }`
+
+  - name: emotion_shy
+    description: >
+      Lùi nhẹ ra sau, nghiêng người một chút rồi tiến lại chậm rãi như đang ngại ngùng.
+      Mẫu này hợp cho các tương tác mềm hơn, ít “ồn ào”.
+    inputSchema:
+      type: object
+      properties:
+        speed:
+          type: number
+          description: "Tốc độ mong muốn, đơn vị rad/s."
+          default: 12
+        step_ms:
+          type: integer
+          description: "Độ dài mỗi nhịp, range 200-5000 ms."
+          default: 500
+      required: []
+    response: >
+      Trả về trạng thái action hiện tại dưới dạng JSON, ví dụ:
+      `{ "ok": true, "running": true, "action": "emotion_shy", "current": "backward", "step": 0, "speed": 12.000, "elapsed_ms": 6, "remaining_ms": 1110 }`
+
+  - name: action_random_move
+    description: >
+      Cho robot tự chọn ngẫu nhiên giữa tiến, lùi, quay trái hoặc quay phải trong một khoảng thời gian ngắn.
+      Phù hợp để test phản ứng chuyển động tổng quát mà không chặn vòng lặp điều khiển.
+    inputSchema:
+      type: object
+      properties:
+        speed:
+          type: number
+          description: "Tốc độ chuyển động mong muốn, đơn vị rad/s."
+          default: 15
+        min_ms:
+          type: integer
+          description: "Tổng thời gian chạy tối thiểu."
+          default: 2000
+        max_ms:
+          type: integer
+          description: "Tổng thời gian chạy tối đa."
+          default: 3000
+      required: []
+    response: >
+      Trả về trạng thái action hiện tại dưới dạng JSON, ví dụ:
+      `{ "ok": true, "running": true, "action": "random_move", "current": "turn_right", "step": 0, "speed": 15.000, "elapsed_ms": 24, "remaining_ms": 2416 }`
+
+  - name: get_action_status
+    description: >
+      Đọc nhanh trạng thái action preset đang chạy, gồm action hiện tại, bước đang thực hiện,
+      lệnh chuyển động hiện thời và thời gian còn lại ước tính.
+    inputSchema:
+      type: object
+      properties: {}
+      required: []
+    response: >
+      Trả về JSON trạng thái hiện tại, ví dụ:
+      `{ "ok": true, "running": true, "action": "ACTION1", "current": "turn_right", "step": 2, "speed": 15.000, "elapsed_ms": 1044, "remaining_ms": 756 }`
+
+  - name: stop_action
+    description: >
+      Dừng action preset đang chạy ngay lập tức và đưa robot về trạng thái stop.
+      Hữu ích khi agent cần ngắt bài test giữa chừng hoặc chốt robot về trạng thái an toàn.
+    inputSchema:
+      type: object
+      properties: {}
+      required: []
+    response: >
+      Trả về JSON trạng thái sau khi dừng, thường có dạng:
+      `{ "ok": true, "running": false, "action": "none", "current": "stop", "step": 0, "speed": 15.000, "elapsed_ms": 0, "remaining_ms": 0 }`

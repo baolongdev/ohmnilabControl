@@ -1,0 +1,10 @@
+hardware:
+  mcu: ESP32 Dev Module (240 MHz)
+  motors: 2x BLDC (7 pole pairs)
+  sensors: 2x AS5600 magnetic encoder (I2C)
+  drivers:
+    left: BLDCDriver3PWM   # pins 32, 33, 25 / EN 22
+    right: BLDCDriver3PWM  # pins 26, 27, 14 / EN 12
+  i2c:
+    bus0: { sda: 19, scl: 18 }   # left sensor
+    bus1: { sda: 23, scl: 5 }    # right sensor

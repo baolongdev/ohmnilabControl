@@ -1,0 +1,5 @@
+http_endpoints:
+  - GET /forward?speed=<float>
+  - GET /backward?speed=<float>
+  - GET /left?speed=<float>
+  - GET /right?speed=<float>

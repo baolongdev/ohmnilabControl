@@ -1,0 +1,75 @@
+tools:
+  - name: get_config
+    description: Đọc cấu hình motor runtime hiện tại và trạng thái persisted NVS.
+    inputSchema:
+      type: object
+      properties: {}
+      required: []
+    response: '{ "ok": true, "persisted": <bool>, "pid": { "p": <float>, "i": <float>, "d": <float> }, "lpf_tf": <float>, "voltage_limit": <float>, "velocity_limit": <float> }'
+
+  - name: set_pid
+    description: Cập nhật PID velocity cho cả 2 motor. Gửi save=true để lưu NVS.
+    inputSchema:
+      type: object
+      properties:
+        p:
+          type: number
+          description: "PID P, range 0-10. Optional; bỏ trống để giữ giá trị hiện tại."
+        i:
+          type: number
+          description: "PID I, range 0-100. Optional; bỏ trống để giữ giá trị hiện tại."
+        d:
+          type: number
+          description: "PID D, range 0-10. Optional; bỏ trống để giữ giá trị hiện tại."
+        save:
+          type: boolean
+          description: "true = lưu cấu hình sau khi set vào NVS."
+          default: false
+      required: []
+    examples:
+      - '{ "p": 0.12, "i": 1.2, "d": 0.0 }'
+      - '{ "p": 0.12, "i": 1.2, "save": true }'
+
+  - name: set_limits
+    description: Cập nhật voltage_limit, velocity_limit và/hoặc lpf_tf cho cả 2 motor. Gửi save=true để lưu NVS.
+    inputSchema:
+      type: object
+      properties:
+        voltage_limit:
+          type: number
+          description: "Giới hạn điện áp motor, range 1-17.5 V."
+        velocity_limit:
+          type: number
+          description: "Giới hạn tốc độ lệnh, range 5-80 rad/s."
+        lpf_tf:
+          type: number
+          description: "Velocity LPF Tf, range 0.001-1.0 s."
+        save:
+          type: boolean
+          description: "true = lưu cấu hình sau khi set vào NVS."
+          default: false
+      required: []
+    examples:
+      - '{ "velocity_limit": 35, "voltage_limit": 9 }'
+      - '{ "velocity_limit": 35, "voltage_limit": 9, "lpf_tf": 0.02, "save": true }'
+
+  - name: save_config
+    description: Lưu cấu hình motor runtime hiện tại vào NVS.
+    inputSchema:
+      type: object
+      properties: {}
+      required: []
+
+  - name: load_config
+    description: Nạp lại cấu hình motor từ NVS; nếu chưa có thì áp defaults compile-time.
+    inputSchema:
+      type: object
+      properties: {}
+      required: []
+
+  - name: reset_config
+    description: Stop robot, xóa cấu hình motor trong NVS, rồi áp lại defaults compile-time.
+    inputSchema:
+      type: object
+      properties: {}
+      required: []

@@ -1,0 +1,17 @@
+connection:
+  provisioning:
+    type: BLE
+    device_name: OhmniRobot
+    service_uuid: "12345678-0000-1000-8000-00805f9b34fb"
+    characteristics:
+      ssid: { uuid: "12345678-0001-1000-8000-00805f9b34fb", access: write }
+      password: { uuid: "12345678-0002-1000-8000-00805f9b34fb", access: write }
+      status: { uuid: "12345678-0003-1000-8000-00805f9b34fb", access: read+notify }
+  mcp:
+    type: websocket
+    provider: XiaoZhi
+    endpoint: "wss://api.xiaozhi.me/mcp/?token=${MCP_TOKEN}"
+    token_env: MCP_TOKEN    # token khai báo trong config.h / MCP_ENDPOINT
+  http_debug:
+    port: 80
+    base: "http://<ROBOT_IP>"
